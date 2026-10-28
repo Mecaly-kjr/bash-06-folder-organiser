@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 folder="${1:-.}"
@@ -25,7 +24,7 @@ moved=0
 for f in "$folder"/*; do
 
     [[ -f "$f" ]] || continue
-    
+
     name="${f##*/}"
 
     # Get the extension and filename without the extension.
