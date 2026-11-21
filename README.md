@@ -134,8 +134,8 @@ ls ~/backups | grep -c '^rebase-'   # 3
 ## File Categories
 
 | Category | Extensions |
-| Images | jpg, jpeg, png, gif, webp |
-| Documents | pdf, doc, docx, txt, xlsx, pptx |
+| Images | JPG, JPEG, PNG, GIF, WEBP |
+| Documents | PDF, DOC, DOCX, TXT, XLSX, PPTX |
 | Audio | mp3, wav, m4a |
 | Video | mp4, mkv, mov |
 | Archives | zip, rar, tar, gz |
