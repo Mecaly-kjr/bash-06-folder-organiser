@@ -1,174 +1,157 @@
-# 🏷 Bash-06-Folder-Organiser
+# 🏷 bash-07-backup-tool
 
-A Bash script that organises files into folders according to their file extensions.
+> `backup.sh` creates compressed, timestamped backups of a folder and automatically deletes old ones.
+
+---
 
 ## 📌 Problem Statement
 
-Managing files in a directory can become difficult when different file types are mixed together. Manually sorting images, documents, audio, videos, and archives takes time and can lead to mistakes or duplicate files being overwritten.
+Laptops get stolen, hard drives die, and files get deleted by mistake. Manual copying is slow and easy to forget, and backups pile up until the disk is full. This tool makes a backup with one command and keeps only the newest ones.
 
 ---
 
 ## 🎯 Project Goals
 
-. Automatically organise files into folders based on their extensions.
-
-. Support uppercase and lowercase file extensions.
-
-. Handle filenames containing spaces and files without extensions.
-
-. Prevent overwriting existing files by adding numbers to duplicate filenames.
-
-. Create category folders only when needed.
-
-. Display a summary of the number of files moved.
-
-. Handle invalid directory paths safely.
+- Create a compressed `.tar.gz` backup of any folder
+- Name each archive `<foldername>-YYYYMMDD-HHMMSS.tar.gz` with a clean internal path
+- Keep only the newest `KEEP` backups of that folder (default 5)
+- Validate input and report errors clearly on stderr
+- Use meaningful exit codes so other scripts can rely on it
 
 ---
 
 ## 🛠 Tech Stack
 
-Bash: Main scripting language used to organise files.
+**Language:**
 
-Linux/Ubuntu: Operating system for running and testing the script.
+- Bash
 
-Git: Version control for tracking project changes.
+**Tools used:**
 
-GitHub: Repository hosting and pull request submission.
+- `getopts` (option parsing)
+- `tar` and `gzip` (archiving)
+- `date`, `sort`, `mkdir`, `rm`
 
-ShellCheck / project linter: For checking shell script quality,
+**Workflow:**
+
+- Git & GitHub (feature branch + pull request)
 
 ---
 
 ## 🖥 Features
 
-. Organises images, documents, audio, video, archives, and other files.
-
-. Supports uppercase and lowercase file extensions.
-
-. Handles filenames containing spaces.
-
-. Prevents overwriting files by adding a number to duplicate filenames.
-
-. Creates category folders only when needed.
-
-. Displays the number of files moved.
-
-. Reports an error when the specified folder does not exist.
+- Options `-d DEST`, `-k KEEP` and `-h`
+- `DEST` defaults to `~/backups` and is created if missing
+- Automatic rotation of old backups (only this folder's backups are touched)
+- Validation: missing source, source not a folder, bad `KEEP`, unknown option
+- Organised into functions: `usage`, `die`, `create_backup`, `rotate_backups`, `main`
+- One-line success message with the archive path
 
 ---
 
 ## 📷 Screenshots
 
-![alt text](<assets/images/Screenshot From 2026-10-28 13-39-33.png>)
+```bash
+$ ./backup.sh ~/rebase
+Backup created: /home/ama/backups/rebase-20261103-101502.tar.gz
 
-![alt text](<assets/images/Screenshot From 2026-10-28 15-25-04.png>)
+$ ./backup.sh -k 3 -d /media/usb/backups ~/rebase
+Backup created: /media/usb/backups/rebase-20261103-101544.tar.gz
 
-![alt text](<assets/images/Screenshot From 2026-10-28 15-26-03.png>)
+$ ./backup.sh -k abc ~/rebase; echo $?
+Error: KEEP must be a positive whole number.
+2
+
+$ ls ~/backups | grep -c '^rebase-'
+3
+```
+
+---
 
 ## ⚙ Installation & Setup
 
-### Prerequisites
-
-Before using the Folder Organiser, make sure you have:
-
-- Ubuntu/Linux or another Unix-like operating system.
-- Bash installed.
-- Git installed (to clone the repository).
-
-### 1. Clone the Repository
-
 ```bash
-git clone https://github.com/YOUR-USERNAME/bash-06-folder-organiser.git
+git clone https://github.com/yourusername/bash-07-backup-tool.git
+cd bash-07-backup-tool
+chmod +x backup.sh
 ```
 
-Replace `YOUR-USERNAME` with your GitHub username.
-
-### 2. Navigate to the Project Directory
+Usage:
 
 ```bash
-cd bash-06-folder-organiser
+./backup.sh [-d DEST] [-k KEEP] SOURCE
 ```
 
-### 3. Make the Script Executable
+| Option | Description |
+| `-d DEST` | Destination folder (default `~/backups`, created if missing) |
+| `-k KEEP` | Number of newest backups to keep (default `5`, positive whole number) |
+| `-h` | Show help and exit with 0 |
+
+Exit codes:
+
+| Code | Meaning |
+| 0 | Success (or `-h`) |
+| 1 | Backup failed (source missing or not a folder, cannot create DEST, tar error) |
+| 2 | Wrong usage (no SOURCE, extra arguments, unknown option, bad KEEP) |
+
+Quick rotation test:
 
 ```bash
-chmod +x organise.sh
+for i in 1 2 3 4 5 6 7; do ./backup.sh -k 3 ~/rebase; sleep 1; done
+ls ~/backups | grep -c '^rebase-'   # 3
 ```
-
-### 4. Run the Script
-
-To organise files in the current directory:
-
-```bash
-./organise.sh
-```
-
-To organise files in a specific directory:
-
-```bash
-./organise.sh /path/to/folder
-```
-
-### 5. Verify the Results
-
-Check the folders created and the files organised:
-
-```bash
-ls
-```
-
-To list files in the organised folders:
-
-```bash
-find /path/to/folder -maxdepth 2 -type f
-```
-
-**Note:** Replace `/path/to/folder` with the actual directory you want to organise. Test the script with a sample folder before using it on important files.
 
 ---
 
 ## 🧠 Challenges Faced
 
-- Handling filenames with spaces and different extensions.
-
-- Preventing files from being overwritten.
-
-- Debugging and testing the script
+- Making rotation safe: a loose pattern like `rebase-*` would also match backups of a folder named `rebase-old`, so the pattern only matches `<folder>-YYYYMMDD-HHMMSS.tar.gz`
+- Getting a clean path inside the archive with `tar -C`
+- Using the correct exit code in each failure case
+- Testing rotation quickly (`sleep 1` so every timestamp is unique)
 
 ---
 
 ## 📚 What I Learned
 
-- Bash scripting, loops, conditions, and file handling.
+- Structuring a Bash script with functions and local variables
+- Parsing options with `getopts`
+- Validating input with regular expressions
+- Writing errors to stderr and returning meaningful exit codes
+- Working with a feature branch and pull request
 
-- Error handling and debugging.
+---
 
-- Using Git and GitHub for version control.
+## 🚀 Future Improvements
+
+- Exclude patterns (e.g. `node_modules`)
+- Restore command
+- Dry-run mode
+- Automated tests and a cron example
 
 ---
 
-## 🚀 Future Improvement
+## File Categories
 
-- More File Types: Support additional file extensions and categories.
+| Category | Extensions |
+| Images | jpg, jpeg, png, gif, webp |
+| Documents | pdf, doc, docx, txt, xlsx, pptx |
+| Audio | mp3, wav, m4a |
+| Video | mp4, mkv, mov |
+| Archives | zip, rar, tar, gz |
+| Other | Unknown extensions and files without extensions |
 
-- Undo Functionality: Allow users to restore files to their original locations.
+## Example Output
 
-- Interactive Mode: Ask users to confirm actions before moving files.
-
-- Logging: Save a record of moved files and errors in a log file.
-
-- Recursive Organisation: Optionally organise files inside subdirectories.
-
-- Dry-Run Mode: Preview which files will be moved without actually moving them.
-
-- Configuration Options: Allow users to customise category names and file extensions.
-
-- Improved Error Handling: Provide clearer error messages and handle permission problems more effectively.
-
-- Automated Testing: Add more tests to verify that all features work correctly.
-
----
+```text
+Organising /home/user/Downloads...
+Moved: photo.jpg -> Images/photo.jpg
+Moved: CV.pdf -> Documents/CV.pdf
+Moved: song.mp3 -> Audio/song.mp3
+Moved: movie.mp4 -> Video/movie.mp4
+----------------------------------------
+Done: 4 files moved
+```
 
 ## 👨🏽‍💻 Author
 
