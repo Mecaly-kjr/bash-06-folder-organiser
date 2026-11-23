@@ -1,157 +1,130 @@
-# 🏷 bash-07-backup-tool
+# Day 6: Folder Organiser
 
-> `backup.sh` creates compressed, timestamped backups of a folder and automatically deletes old ones.
+A Bash script that automatically organises files into folders based on their file extensions.
 
----
+## Problem Statement
 
-## 📌 Problem Statement
+Managing folders with many different file types can be difficult and time-consuming. Finding files becomes harder when documents, images, audio and videos are mixed together.
 
-Laptops get stolen, hard drives die, and files get deleted by mistake. Manual copying is slow and easy to forget, and backups pile up until the disk is full. This tool makes a backup with one command and keeps only the newest ones.
+## Project Goals
 
----
+- Automatically organise files into categories.
+- Support uppercase and lowercase file extensions.
+- Handle filenames containing spaces.
+- Prevent files from being overwritten.
+- Move files without extensions into the Other folder.
+- Display each move and a final summary.
 
-## 🎯 Project Goals
+## Features
 
-- Create a compressed `.tar.gz` backup of any folder
-- Name each archive `<foldername>-YYYYMMDD-HHMMSS.tar.gz` with a clean internal path
-- Keep only the newest `KEEP` backups of that folder (default 5)
-- Validate input and report errors clearly on stderr
-- Use meaningful exit codes so other scripts can rely on it
-
----
-
-## 🛠 Tech Stack
-
-**Language:**
-
-- Bash
-
-**Tools used:**
-
-- `getopts` (option parsing)
-- `tar` and `gzip` (archiving)
-- `date`, `sort`, `mkdir`, `rm`
-
-**Workflow:**
-
-- Git & GitHub (feature branch + pull request)
-
----
-
-## 🖥 Features
-
-- Options `-d DEST`, `-k KEEP` and `-h`
-- `DEST` defaults to `~/backups` and is created if missing
-- Automatic rotation of old backups (only this folder's backups are touched)
-- Validation: missing source, source not a folder, bad `KEEP`, unknown option
-- Organised into functions: `usage`, `die`, `create_backup`, `rotate_backups`, `main`
-- One-line success message with the archive path
-
----
-
-## 📷 Screenshots
-
-```bash
-$ ./backup.sh ~/rebase
-Backup created: /home/ama/backups/rebase-20261103-101502.tar.gz
-
-$ ./backup.sh -k 3 -d /media/usb/backups ~/rebase
-Backup created: /media/usb/backups/rebase-20261103-101544.tar.gz
-
-$ ./backup.sh -k abc ~/rebase; echo $?
-Error: KEEP must be a positive whole number.
-2
-
-$ ls ~/backups | grep -c '^rebase-'
-3
-```
-
----
-
-## ⚙ Installation & Setup
-
-```bash
-git clone https://github.com/yourusername/bash-07-backup-tool.git
-cd bash-07-backup-tool
-chmod +x backup.sh
-```
-
-Usage:
-
-```bash
-./backup.sh [-d DEST] [-k KEEP] SOURCE
-```
-
-| Option | Description |
-| `-d DEST` | Destination folder (default `~/backups`, created if missing) |
-| `-k KEEP` | Number of newest backups to keep (default `5`, positive whole number) |
-| `-h` | Show help and exit with 0 |
-
-Exit codes:
-
-| Code | Meaning |
-| 0 | Success (or `-h`) |
-| 1 | Backup failed (source missing or not a folder, cannot create DEST, tar error) |
-| 2 | Wrong usage (no SOURCE, extra arguments, unknown option, bad KEEP) |
-
-Quick rotation test:
-
-```bash
-for i in 1 2 3 4 5 6 7; do ./backup.sh -k 3 ~/rebase; sleep 1; done
-ls ~/backups | grep -c '^rebase-'   # 3
-```
-
----
-
-## 🧠 Challenges Faced
-
-- Making rotation safe: a loose pattern like `rebase-*` would also match backups of a folder named `rebase-old`, so the pattern only matches `<folder>-YYYYMMDD-HHMMSS.tar.gz`
-- Getting a clean path inside the archive with `tar -C`
-- Using the correct exit code in each failure case
-- Testing rotation quickly (`sleep 1` so every timestamp is unique)
-
----
-
-## 📚 What I Learned
-
-- Structuring a Bash script with functions and local variables
-- Parsing options with `getopts`
-- Validating input with regular expressions
-- Writing errors to stderr and returning meaningful exit codes
-- Working with a feature branch and pull request
-
----
-
-## 🚀 Future Improvements
-
-- Exclude patterns (e.g. `node_modules`)
-- Restore command
-- Dry-run mode
-- Automated tests and a cron example
-
----
+- Supports Images, Documents, Audio, Video, Archives and Other.
+- Creates category folders only when needed.
+- Processes only top-level files.
+- Leaves existing subfolders untouched.
+- Uses numbered filenames when a duplicate exists.
 
 ## File Categories
 
 | Category | Extensions |
 | Images | JPG, JPEG, PNG, GIF, WEBP |
 | Documents | PDF, DOC, DOCX, TXT, XLSX, PPTX |
-| Audio | mp3, wav, m4a |
-| Video | mp4, mkv, mov |
-| Archives | zip, rar, tar, gz |
+| Audio | MP3, WAV, M4A |
+| Video | MP4, MKV, MOV |
+| Archives | ZIP, RAR, TAR, GZ |
 | Other | Unknown extensions and files without extensions |
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/Mecaly-kjr/bash-06-folder-organiser.git
+cd bash-06-folder-organiser
+```
+
+Make the script executable:
+
+```bash
+chmod +x organise.sh
+```
+
+## Usage
+
+Organise a specific folder:
+
+```bash
+./organise.sh /path/to/folder
+```
+
+Organise the current folder:
+
+```bash
+./organise.sh
+```
+
+**Important:** Do not run the script inside your project repository. It moves files, so use a separate test folder to avoid moving your project files.
+
+## How to Test
+
+Create a test folder:
+
+```bash
+mkdir -p ~/organiser-test
+touch ~/organiser-test/photo.jpg
+touch ~/organiser-test/CV.pdf
+touch ~/organiser-test/song.mp3
+touch ~/organiser-test/movie.mp4
+touch ~/organiser-test/notes
+```
+
+Run the script:
+
+```bash
+./organise.sh ~/organiser-test
+```
+
+Check the results:
+
+```bash
+find ~/organiser-test -maxdepth 2 -type f
+```
 
 ## Example Output
 
 ```text
-Organising /home/user/Downloads...
+Organising /home/user/organiser-test...
 Moved: photo.jpg -> Images/photo.jpg
 Moved: CV.pdf -> Documents/CV.pdf
 Moved: song.mp3 -> Audio/song.mp3
 Moved: movie.mp4 -> Video/movie.mp4
+Moved: notes -> Other/notes
 ----------------------------------------
-Done: 4 files moved
+Done: 5 files moved
 ```
+
+## Challenges Faced
+
+- Handling filenames with spaces and different extensions.
+- Preventing files from being overwritten.
+- Testing the script with different folder contents.
+
+## What I Learned
+
+- Bash scripting, loops and conditions.
+- File handling and error handling.
+- Using Git and GitHub for version control.
+- Testing and debugging shell scripts.
+
+## Conclusion
+
+This project improved my Bash scripting, problem-solving and automation skills.
+
+## Future Improvements
+
+- Add more supported file extensions.
+- Add a dry-run option.
+- Add an undo feature.
+- Add logging functionality.
 
 ## 👨🏽‍💻 Author
 
